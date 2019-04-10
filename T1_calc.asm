@@ -4,6 +4,7 @@ menu1:	.asciiz	"3 - Multiplicacao\t8 - Calculo do IMC\n4 - Divisao\t\t9 - Fatori
 
 ins1:	.asciiz "> Inserir um numero\n"
 ins2:	.asciiz "> Inserir dois numeros\n"
+err:	.asciiz "ERRO: Valor invalido! Favor inserir outro numero.\n"
 
 sum0:	.asciiz "\tSOMA\n"
 sum1:	.asciiz " + "
@@ -24,6 +25,9 @@ pot1:	.asciiz "^"
 sqrt0:	.asciiz "\tRAIZ QUADRADA\n"
 sqrt1:	.asciiz "sqrt"
 
+tab0:	.asciiz "\tTABUADA\n"
+tab1:	.asciiz "> Tabuada de "
+
 imc0:	.asciiz "Inserir altura (m) e peso (kg)\n"
 imc1:	.asciiz "IMC: "
 
@@ -31,9 +35,8 @@ fat0:	.asciiz "\tFATORIAL\n"
 fat1:	.asciiz "!"
 
 phi0:	.asciiz "\tFIBONACCI\n"
-phi1:	.asciiz "Numeros de Fibonacci entre "
-phi2:	.asciiz ":\n"
-phi3:	.asciiz "ERRO: O segundo valor deve ser maior do que o primeiro!\n"
+phi1:	.asciiz "> Numeros de Fibonacci entre "
+phi2:	.asciiz "ERRO: O segundo valor deve ser maior do que o primeiro!\n"
 
 ee:	.asciiz " e "
 eq:	.asciiz " = "
@@ -41,10 +44,10 @@ nl:	.asciiz "\n"
 space:	.asciiz " "
 par_op:	.asciiz "("
 par_cl:	.asciiz ")"
+tdot:	.asciiz ":\n"
 
 	.text
 	.globl main
-
 
 #				
 #	FUNCAO PRINCIPAL		
@@ -96,6 +99,8 @@ main:
 	
 	# Caso opcao = 7
 	# Tabuada
+	addi $t1, $zero, 7
+	beq $t0, $t1, case_7
 	
 	# Caso opcao = 8
 	# Calculo do IMC
@@ -118,7 +123,6 @@ main:
 	beq $t0, $t1, end_calc
 	
 	j main
-
 
 #
 #	CASE 1: SOMA
@@ -216,7 +220,8 @@ case_3:
 	li $v0, 4
 	la $a0, ins2	# "Inserir dois numeros"
 	syscall
-		
+	
+	addi $s0, $zero, 1
 	jal lerInt
 	move $a0, $v0	# $a0 = primeiro argumento
 	jal lerInt
@@ -301,7 +306,7 @@ case_4:
 	j main
 
 #
-#		CASE 5: POTENCIA			#
+#		CASE 5: POTENCIA
 #
 
 case_5:
@@ -394,6 +399,25 @@ case_6:
 	syscall
 	
 	j main	
+	
+#
+#	CASE 7: TABUADA
+#
+
+case_7:
+	li $v0, 4
+	la $a0, ins1
+	syscall
+	
+	jal lerInt
+	move $a0, $v0
+	
+	jal tabuada
+	
+	# Imprimir resultado
+	
+	j main
+
 
 #
 #	CASE 8: CALCULO DO IMC
@@ -461,7 +485,7 @@ case_9:
 	j main
 	
 #
-#	 CASE 10: SEQUENCIA DE FIBONACCI	#
+#	CASE 10: SEQUENCIA DE FIBONACCI
 #
 
 case_10:
@@ -475,45 +499,49 @@ case_10:
 	syscall
 		
 	jal lerInt
-	move $a0, $v0	# $a0 = primeiro argumento
+	move $a0, $v0	# $v0 = primeiro argumento
 	jal lerInt
-	move $a1, $v0	# $a1 = segundo argumento
+	move $a1, $v0	# $v1 = segundo argumento
 
-	# verifica se $a0 < $a1 e, caso contrario, da erro 
-	bge $a0, $a1, phi_error 
-			
-	jal calc_fat	# Efetuar operacao
-	move $s0, $v0	# $s0 = resultado da operacao
-	move $s1, $a0	# $s1 = primeiro argumento
-	move $s2, $a1	# $s1 = seundo argumento
+	bge $a0, $a1, phi_error # Verifica se $a0 < $a1, caso contrario da erro 
 	
-	# "Numeros de Fibonacci entre <$a0> e <$a1>:"
+	move $s1, $a0	# $s1 = primeiro argumento
+	move $s2, $a1	# $s2 = segundo argumento
+	
+	# Imprimir "Numeros de Fibonacci entre <$a0> e <$a1>:"
 	li $v0, 4
 	la $a0, phi1
-	syscall	
+	syscall
+	
 	li $v0, 1
 	move $a0, $s1
 	syscall
+	
 	li $v0, 4
 	la $a0, ee
-	syscall	
+	syscall
+	
 	li $v0, 1
 	move $a0, $s2
-	syscall	
+	syscall
+	
+	li $v0, 4
+	la $a0, tdot
+	syscall
+	
+	move $a0, $s1	#  Recupera o primeiro argumento, que foi perdido na hora de imprimir a mensagem
+							
+	jal calc_phi	# Calcula e imprime os numeros da sequencia de Fibonacci no range [<$a0>,<$a1>]
+	
+	j main
+	
+# Notifica um erro e retorna para a main se os argumentos forem invalidos
+phi_error:
 	li $v0, 4
 	la $a0, phi2
 	syscall
 	
-	j main
-	
-#	Se os argumentos forem invalidos, 
-# imprimir mensagem de erro e retornar para a main
-phi_error:
-	li $v0, 4
-	la $a0, phi3
-	syscall
-	
-	j main
+	j main	
 
 #
 #	CASE 0: Sair
@@ -698,7 +726,43 @@ end_loop_raiz:
 	addi $sp, $sp, 8			# Desaloca o espaco utilizado na pilha
  
 	jr $ra					# Retorna para o endereco contido em $ra
-	
+
+#
+#	PROCEDIMENTO: TABUADA
+#
+  
+# Este procedimento retona um endereco de vetor de tamanho 10 e nao imprime nenhum valor na tela. 
+# O retorno da funcao eh colocado no vetor passado no argumento 1.
+#eh necessario criar um vetor na main
+tabuada:
+	addi $sp, $sp, -12		# Aloca espaco na pilha
+	sw $a0, 0($sp)			# Guarda o primeiro argumento, numero que indica qual a tabuada a ser retornada
+	sw $a1, 4($sp)			# Guarda o segundo argumento, vetor no qual a tabuada sera colocada
+	sw $ra, 8($sp)			# Guarda o endereço de retorno	
+
+	addi $t0, $zero, 0		# Cria um iterador para o loop (it = 0,1,2,..,10, 11)
+	addi $t1, $zero, 11		# Cria um limite para o loop, $t1 = 11
+
+loop_tab:	
+	beq  $t0, $t1, end_loop_tab	# Interrompe o loop se $t0 = 11
+	mul  $t2, $a0, $t0		# Guarda o valor da multiplicação em $t2
+
+	sw $t2, 0($a1)			# Guarda o valor da multiplicação no vetor
+
+	addi $a1, $a1, 1       		# Incrementa a posição do vetor indicado por $a1
+	addi $t0, $zero, 1		# Incrementa o iterador do loop
+
+	j loop_tab
+
+end_loop_tab:
+	lw $a0, 0($sp)			# Recupera o valor original do primeiro argumento
+	lw $a1, 4($sp)			# Recupera o valor original do segundo argumento
+	lw $ra, 8($sp)			# Recupera o valor original do endereco de retorno
+	addi $sp, $sp, 12		# Desaloca espaco da pilha
+
+	jr $ra				# Retorna para o endereco contido em $ra
+			
+									
 #
 #	PROCEDIMENTO: CALCULO DO IMC
 #
@@ -732,16 +796,96 @@ calc_fat:
 	addi $v0, $zero, 1		# $v0 = 1, retorno da funcao
 	
 loop_fat:
-	ble $a0, $t0, end_loop		# Finaliza repeticao se $a0 <= 1
+	ble $a0, $t0, end_loop_fat	# Finaliza repeticao se $a0 <= 1
 	mul $v0, $v0, $a0		# $v0 = $v0 * $a0
 	addi $a0, $a0, -1		# $a0 = $a0 - 1
 	
 	j loop_fat			# Reinicia loop
 	
-end_loop:
+end_loop_fat:
 	lw $a0, 0($sp)			# Recupera o valor original de $a0
 	lw $ra, 4($sp)			# Recupera o valor original de $ra
 	addi $sp, $sp, 8		# Desaloca o espaco utilizado na pilha
+ 
+	jr $ra				# Retorna para o endereco contido em $ra
+	
+#
+#	PROCEDIMENTO: SEQUENCIA DE FIBONACCI
+#
+	
+calc_phi:
+	addi $sp, $sp, -32		# Aloca espaco na pilha
+	sw $a0, 0($sp)			# Guarda o primeiro argumento
+	sw $a1, 4($sp)			# Guarda o segundo argumento
+	sw $ra, 8($sp)			# Guarda o endereço de retorno
+	sw $t0, 12($sp)			# Guarda o valor original de $t0 para nao sobreescreve-lo
+	sw $t1, 16($sp)			# Guarda o valor original de $t1 para nao sobreescreve-lo
+	sw $t2, 20($sp)			# Guarda o valor original de $t2 para nao sobreescreve-lo
+	sw $t3, 24($sp)			# Guarda o valor original de $t3 para nao sobreescreve-lo
+	sw $t4, 28($sp)			# Guarda o valor original de $t4 para nao sobreescreve-lo
+	
+	move $t3, $a0			# Salva o primeiro argumento em $t3
+	move $t4, $a1			# Salva o segundo argumento em $t4
+	
+	li $t0, 0			# $t0 = 0, valor F(0)
+	li $t1, 1			# $t1 = 1, valor F(1)
+	
+	# Imprime o primeiro valor da sequencia se ele estiver no range. 
+	bgt $t3, $t0, print_phi_1
+	
+	li $v0, 1
+	move $a0, $t0
+	syscall 
+	
+	li $v0, 4			# Imprime um espaco
+	la $a0, space
+	syscall
+
+	# Imprime o segundo valor da sequencia se ele estiver no range.
+print_phi_1:
+	bgt $t3, $t1, loop_phi
+
+	li $v0, 1
+	move $a0, $t1
+	syscall
+	
+	li $v0, 4			# Imprime um espaco
+	la $a0, space
+	syscall		
+					
+loop_phi:
+	# Calcula o proximo valor da sequencia
+	add $t2, $t0, $t1 		# $t2 = $t0 + $t1 (F(n) = F(n-1) + F(n-2))
+	
+	bgt $t2, $t4, end_loop_phi 	# Finaliza o loop se o valor jah ultrapassou o range ($t2 > $t4: acima do maximo)
+	blt $t2, $t3, nao_printa_phi 	# Verifica se o valor eh maior ou igual ao minimo antes de printar ($t2 < $t3: a baixo do minimo)
+	
+	li $v0, 1			# Imprime o novo valor da sequencia
+	move $a0, $t2
+	syscall
+	
+	li $v0, 4			# Imprime um espaco
+	la $a0, space
+	syscall
+	
+	nao_printa_phi: 
+	
+	move $t0, $t1 			# Move os valores da sequencia "um registrador para baixo" para poder calcular o proximo
+	move $t1, $t2
+	
+	j loop_phi			# Reinicia loop
+	
+end_loop_phi:
+
+	lw $a0, 0($sp)			# Recupera o valor original de $a0
+	lw $a1, 4($sp)			# Recupera o valor original de $a1
+	lw $ra, 8($sp)			# Recupera o valor original de $ra
+	lw $t0, 12($sp)			# Recupera o valor original de $t0
+	lw $t1, 16($sp)			# Recupera o valor original de $t1
+	lw $t2, 20($sp)			# Recupera o valor original de $t2
+	lw $t3, 24($sp)			# Recupera o valor original de $t1
+	lw $t4, 28($sp)			# Recupera o valor original de $t2
+	addi $sp, $sp, 32		# Desaloca o espaco utilizado na pilha
  
 	jr $ra				# Retorna para o endereco contido em $ra
 	
@@ -750,9 +894,24 @@ end_loop:
 #
 
 lerInt:
-	li $v0, 5
+	li $v0, 5		# Lê inteiro
 	syscall
-	jr $ra
+	
+	addi $s1, $zero, 1	# $s0 indica se a operacao é a multiplicacao,
+	beq $s0, $s1, bit16	# cujas entradas devem ter, no maximo, 16 bytes
+	
+bit32:	addi $a1, $zero, 2147483647
+	j cmp
+bit16:	addi $a1, $zero, 65536
+
+cmp:	blt $a0, $a1, return	
+
+	li $v0, 4
+	la $a0, err
+	syscall
+	j lerInt
+	
+return:	jr $ra
 	
 lerFloat:
 	li $v0, 6
