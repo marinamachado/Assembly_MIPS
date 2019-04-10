@@ -407,17 +407,43 @@ case_6:
 case_7:
 	li $v0, 4
 	la $a0, ins1
+	syscall			#printa a string "digite um numero"
+	
+	li $v0, 5
+	syscall
+	move $s1, $v0  		#le um inteiro e guarda em $s1
+
+	li $v0, 9
+	li $a0, 44
+	syscall       		#aloca espaco na heap
+	la $a1, ($v0)		#coloca o vetor alocado em $a1  
+	
+	move $a0, $s1  		#coloca o inteiro lido em $s1 em $a0
+	
+	jal tabuada 		#chama a tabuada
+	
+	la $s0, ($a1) 		#coloca o vetor retornado em $s0
+
+	addi $t0, $zero, 0
+	addi $t1, $zero, 11
+
+loop_vetor: bge $t0, $t1, end_loop_vetor
+
+	li $v0, 1
+	lw $a0, 0($s0)
 	syscall
 	
-	jal lerInt
-	move $a0, $v0
-	
-	jal tabuada
-	
-	# Imprimir resultado
-	
-	j main
+	li $v0, 4
+	la $a0, space
+	syscall
 
+	addi $t0, $t0, 1
+	addi $s0, $s0, 4
+
+	j loop_vetor
+	
+end_loop_vetor:
+	j main
 
 #
 #	CASE 8: CALCULO DO IMC
@@ -749,8 +775,8 @@ loop_tab:
 
 	sw $t2, 0($a1)			# Guarda o valor da multiplicação no vetor
 
-	addi $a1, $a1, 1       		# Incrementa a posição do vetor indicado por $a1
-	addi $t0, $zero, 1		# Incrementa o iterador do loop
+	addi $a1, $a1, 4       		# Incrementa a posição do vetor indicado por $a1
+	addi $t0, $t0, 1		# Incrementa o iterador do loop
 
 	j loop_tab
 
