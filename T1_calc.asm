@@ -13,7 +13,7 @@
 #
 #													ALUNOS:
 #								Joao Pedro Almeida Secundino
-#								Luis Eduardo
+#								Luis Eduardo Rozante de Freitas Pereira
 #								Luiza Pereira Pinto Machado		
 #								Marina Fontes Alcantara Machado
 #
