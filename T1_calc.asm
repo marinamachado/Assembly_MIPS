@@ -3,10 +3,10 @@
 #
 # 				 SSC0902 - Organizacao e Arquitetura de Computadores		
 #
-#						 1º Trabalho Prático
+#						 1o. Trabalho Pratico
 #						    Calculadora
 #
-# Este programa visa simular, em Assembly MIPS, uma calculadora capaz de realizar as seguintes operações:
+# Este programa visa simular, em Assembly MIPS, uma calculadora capaz de realizar as seguintes operacoes:
 # - soma	- multiplicacao		- potencia		- tabuada		- fatorial
 # - subtracao	- divisao		- raiz quadrada		- calculo do IMC	- sequencia de Fibonacci
 #
@@ -14,7 +14,7 @@
 #													ALUNOS:
 #								Joao Pedro Almeida Secundino
 #								Luis Eduardo
-#								Luiza Pereira Pinto Machado		7564426
+#								Luiza Pereira Pinto Machado		
 #								Marina Fontes Alcantara Machado
 #
 ################################################################################################################
