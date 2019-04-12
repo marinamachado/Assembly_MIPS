@@ -1,10 +1,34 @@
+#				   	     UNIVERSIDADE DE SAO PAULO
+#				  INSTITUTO DE CIENCIAS MATEMATICAS E DE COMPUTACAO
+#
+# 				 SSC0902 - Organizacao e Arquitetura de Computadores		
+#
+#						 1º Trabalho Prático
+#						    Calculadora
+#
+# Este programa visa simular, em Assembly MIPS, uma calculadora capaz de realizar as seguintes operações:
+# - soma	- multiplicacao		- potencia		- tabuada		- fatorial
+# - subtracao	- divisao		- raiz quadrada		- calculo do IMC	- sequencia de Fibonacci
+#
+#
+#													ALUNOS:
+#								Joao Pedro Almeida Secundino
+#								Luis Eduardo
+#								Luiza Pereira Pinto Machado		7564426
+#								Marina Fontes Alcantara Machado
+#
+################################################################################################################
+
 	.data
 menu0:	.asciiz "\n\tSELECIONAR OPERACAO DESEJADA\n1 - Soma\t\t6 - Raiz quadrada\n2 - Subtracao\t\t7 - Tabuada\n"
 menu1:	.asciiz	"3 - Multiplicacao\t8 - Calculo do IMC\n4 - Divisao\t\t9 - Fatorial\n5 - Potencia\t\t10 - Sequencia de Fibonacci\n0 - SAIR\n"
 
 ins1:	.asciiz "> Inserir um numero\n"
 ins2:	.asciiz "> Inserir dois numeros\n"
-err:	.asciiz "ERRO: Valor invalido! Favor inserir outro numero.\n"
+
+err0:	.asciiz "ERRO: Valor invalido! Os argumentos devem ser estar entre -32767 e 32767.\n"
+err1:	.asciiz "ERRO: Valor invalido! O(s) argumento(s) não deve(m) ser negativo(s).\n"
+err2:	.asciiz "ERRO: Valor invalido! Este argumento deve ser diferente de zero.\n"
 
 sum0:	.asciiz "\tSOMA\n"
 sum1:	.asciiz " + "
@@ -35,10 +59,10 @@ fat0:	.asciiz "\tFATORIAL\n"
 fat1:	.asciiz "!"
 
 phi0:	.asciiz "\tFIBONACCI\n"
-phi1:	.asciiz "> Numeros de Fibonacci entre "
-phi2:	.asciiz "ERRO: O segundo valor deve ser maior do que o primeiro!\n"
+phi1:	.asciiz "> Numeros de Fibonacci "
+invrg:	.asciiz "ERRO: O segundo valor deve ser maior do que o primeiro!\n"
 
-ee:	.asciiz " e "
+aa:	.asciiz " a "
 eq:	.asciiz " = "
 nl:	.asciiz "\n"
 space:	.asciiz " "
@@ -63,9 +87,12 @@ main:
 	syscall
 	
 	# LER OPCAO
-	li $v0, 5		# Chamada de servico 5: leitura de inteiro
+	li $v0, 5	# Chamada de servico 5: leitura de inteiro
 	syscall
 	move $t0, $v0	# $t0 = numero digitado
+	
+	# $s7 = 0 indica que nenhuma operacao foi escolhida ou nao ha restricoes para a operacao selecionada
+	addi $s7, $zero, 0
 	
 	# Caso opcao = 1
 	# Soma
@@ -221,7 +248,9 @@ case_3:
 	la $a0, ins2	# "Inserir dois numeros"
 	syscall
 	
-	addi $s0, $zero, 1
+	# $s7 = 1 indica que a operacao nao aceita numeros maiores que 32767 (2^15) ou menores que -32767
+	addi $s7, $zero, 1
+	
 	jal lerInt
 	move $a0, $v0	# $a0 = primeiro argumento
 	jal lerInt
@@ -266,6 +295,7 @@ case_4:
 	
 	jal lerInt
 	move $a0, $v0	# $a0 = primeiro argumento
+	addi $s7, $zero, 3	# $s7 = 3 : operando deve ser diferente de zero
 	jal lerInt
 	move $a1, $v0	# $a1 = segundo argumento
 	
@@ -368,6 +398,9 @@ case_6:
 	la $a0, ins1	# "Inserir um numero"
 	syscall
 	
+	# $s7 = 2 indica que a operacao nao aceita numeros negativos
+	addi $s7, $zero, 2
+	
 	jal lerInt		
 	move $a0, $v0	# $a0 = primeiro argumento
 	
@@ -407,27 +440,28 @@ case_6:
 case_7:
 	li $v0, 4
 	la $a0, ins1
-	syscall			#printa a string "digite um numero"
+	syscall			# Imprime a string "digite um numero"
 	
 	li $v0, 5
 	syscall
-	move $s1, $v0  		#le um inteiro e guarda em $s1
+	move $s1, $v0  		# Le um inteiro e guarda em $s1
 
 	li $v0, 9
 	li $a0, 44
-	syscall       		#aloca espaco na heap
-	la $a1, ($v0)		#coloca o vetor alocado em $a1  
+	syscall       		# Aloca espaco na heap
+	la $a1, ($v0)		# Coloca o vetor alocado em $a1  
 	
-	move $a0, $s1  		#coloca o inteiro lido em $s1 em $a0
+	move $a0, $s1  		# Coloca o inteiro lido em $s1 em $a0
 	
-	jal tabuada 		#chama a tabuada
+	jal tabuada 		# Chama a tabuada
 	
-	la $s0, ($a1) 		#coloca o vetor retornado em $s0
+	la $s0, ($a1) 		# Coloca o vetor retornado em $s0
 
 	addi $t0, $zero, 0
 	addi $t1, $zero, 11
 
-loop_vetor: bge $t0, $t1, end_loop_vetor
+loop_vetor: 
+	bge $t0, $t1, end_loop_vetor
 
 	li $v0, 1
 	lw $a0, 0($s0)
@@ -484,6 +518,9 @@ case_9:
 	la $a0, ins1	# "Inserir um numero"
 	syscall
 	
+	# $s7 = 2 indica que a operacao nao aceita numeros negativos
+	addi $s7, $zero, 2
+	
 	jal lerInt	
 	move $a0, $v0	# $a0 = primeiro argumento
 	
@@ -517,24 +554,27 @@ case_9:
 case_10:
 
 	li $v0, 4
-	la $a0, phi0	# "FIBONACCI"
+	la $a0, phi0		# "FIBONACCI"
 	syscall
 	
 	li $v0, 4
-	la $a0, ins2	# "Inserir dois numeros"
+	la $a0, ins2		# "Inserir dois numeros"
 	syscall
-		
+	
+	# $s7 = 2 indica que a operacao nao aceita numeros negativos
+	addi $s7, $zero, 2
+	
 	jal lerInt
-	move $a0, $v0	# $v0 = primeiro argumento
+	move $a0, $v0		# $v0 = primeiro argumento
 	jal lerInt
-	move $a1, $v0	# $v1 = segundo argumento
+	move $a1, $v0		# $v1 = segundo argumento
 
-	bge $a0, $a1, phi_error # Verifica se $a0 < $a1, caso contrario da erro 
+	bge $a0, $a1, phi_error	# Verifica se $a0 < $a1, caso contrario da erro 
 	
-	move $s1, $a0	# $s1 = primeiro argumento
-	move $s2, $a1	# $s2 = segundo argumento
+	move $s1, $a0		# $s1 = primeiro argumento
+	move $s2, $a1		# $s2 = segundo argumento
 	
-	# Imprimir "Numeros de Fibonacci entre <$a0> e <$a1>:"
+	# Imprimir "Numeros de Fibonacci <$a0> a <$a1>:"
 	li $v0, 4
 	la $a0, phi1
 	syscall
@@ -544,7 +584,7 @@ case_10:
 	syscall
 	
 	li $v0, 4
-	la $a0, ee
+	la $a0, aa
 	syscall
 	
 	li $v0, 1
@@ -555,18 +595,18 @@ case_10:
 	la $a0, tdot
 	syscall
 	
-	move $a0, $s1	#  Recupera o primeiro argumento, que foi perdido na hora de imprimir a mensagem
+	move $a0, $s1		#  Recupera o primeiro argumento, que foi perdido na hora de imprimir a mensagem
 							
-	jal calc_phi	# Calcula e imprime os numeros da sequencia de Fibonacci no range [<$a0>,<$a1>]
+	jal calc_phi		# Calcula e imprime os numeros da sequencia de Fibonacci no range [<$a0>,<$a1>]
 	
 	j main
 	
-# Notifica um erro e retorna para a main se os argumentos forem invalidos
+# Notifica que um intervalo invalido de numeros foi inserido e retorna para a main
 phi_error:
 	li $v0, 4
-	la $a0, phi2
+	la $a0, invrg
 	syscall
-	
+
 	j main	
 
 #
@@ -619,7 +659,7 @@ subt:				# Retorna o valor $v0 = $a0 - $a1
 #	PROCEDIMENTO: MULTIPLICACAO
 #
 	
-mult:					# Retorna o valor $v0 = $a0 * $a1
+mult:				# Retorna o valor $v0 = $a0 * $a1
 	addi $sp, $sp, -12	# Aloca espaco na pilha
 	sw $a0, 0($sp)		# Guarda o primeiro argumento
 	sw $a1, 4($sp)		# Guarda o segundo argumento
@@ -794,7 +834,7 @@ end_loop_tab:
 #
  
 calc_imc:
-	addi $sp,$sp,-12	# Aloca espaco na pilha
+	addi $sp, $sp, -12	# Aloca espaco na pilha
 	s.s $f1, 0($sp)		# Guarda o primeiro argumento (altura)
 	s.s $f2, 4($sp)		# Guarda o segundo argumento (peso)
 	sw $ra, 8($sp)		# Guarda o endereço de retorno
@@ -840,24 +880,27 @@ end_loop_fat:
 #
 	
 calc_phi:
-	addi $sp, $sp, -32		# Aloca espaco na pilha
+	addi $sp, $sp, -36		# Aloca espaco na pilha
 	sw $a0, 0($sp)			# Guarda o primeiro argumento
 	sw $a1, 4($sp)			# Guarda o segundo argumento
 	sw $ra, 8($sp)			# Guarda o endereço de retorno
-	sw $t0, 12($sp)			# Guarda o valor original de $t0 para nao sobreescreve-lo
-	sw $t1, 16($sp)			# Guarda o valor original de $t1 para nao sobreescreve-lo
-	sw $t2, 20($sp)			# Guarda o valor original de $t2 para nao sobreescreve-lo
-	sw $t3, 24($sp)			# Guarda o valor original de $t3 para nao sobreescreve-lo
-	sw $t4, 28($sp)			# Guarda o valor original de $t4 para nao sobreescreve-lo
+	sw $t0, 12($sp)			# Guarda o valor original de $t0 para nao sobrescreve-lo
+	sw $t1, 16($sp)			# Guarda o valor original de $t1 para nao sobrescreve-lo
+	sw $t2, 20($sp)			# Guarda o valor original de $t2 para nao sobrescreve-lo
+	sw $t3, 24($sp)			# Guarda o valor original de $t3 para nao sobrescreve-lo
+	sw $t4, 28($sp)			# Guarda o valor original de $t4 para nao sobrescreve-lo
+	sw $t5, 32($sp)			# Guarda o valor original de $t5 para nao sobrescreve-lo
 	
 	move $t3, $a0			# Salva o primeiro argumento em $t3
-	move $t4, $a1			# Salva o segundo argumento em $t4
+	move $t4, $a1			# Salva o segundo argumento em $t4	
 	
-	li $t0, 0			# $t0 = 0, valor F(0)
+	li $t0, 1			# $t0 = 0, valor F(0)
 	li $t1, 1			# $t1 = 1, valor F(1)
 	
-	# Imprime o primeiro valor da sequencia se ele estiver no range. 
-	bgt $t3, $t0, print_phi_1
+	li $t5, 1			# Guarda em $t5 que o numero atual da sequencia eh o primeiro
+	
+	# Imprime o primeiro valor da sequencia se ele estiver no intervalo. 
+	bgt $t3, $t5, goto_phi_2
 	
 	li $v0, 1
 	move $a0, $t0
@@ -867,8 +910,11 @@ calc_phi:
 	la $a0, space
 	syscall
 
-	# Imprime o segundo valor da sequencia se ele estiver no range.
-print_phi_1:
+goto_phi_2:
+
+	addi $t5, $t5, 1		# Incrementa $t5 para indicar que o numero atual da sequencia eh o segundo
+
+	# Imprime o segundo valor da sequencia se ele estiver no intervalo.
 	bgt $t3, $t1, loop_phi
 
 	li $v0, 1
@@ -880,11 +926,14 @@ print_phi_1:
 	syscall		
 					
 loop_phi:
+
+	addi $t5, $t5, 1		# Incrementa $t5 para indicar que o proximo numero da sequencia esta sendo calculado
+	bgt $t5, $t4, end_loop_phi 	# Finaliza o loop se o intervalo jah foi ultrapassado ($t5 > $t4: acima do maximo)
+
 	# Calcula o proximo valor da sequencia
 	add $t2, $t0, $t1 		# $t2 = $t0 + $t1 (F(n) = F(n-1) + F(n-2))
 	
-	bgt $t2, $t4, end_loop_phi 	# Finaliza o loop se o valor jah ultrapassou o range ($t2 > $t4: acima do maximo)
-	blt $t2, $t3, nao_printa_phi 	# Verifica se o valor eh maior ou igual ao minimo antes de printar ($t2 < $t3: a baixo do minimo)
+	blt $t5, $t3, nao_printa_phi 	# Verifica se o valor eh maior ou igual ao minimo antes de printar ($t2 < $t3: a baixo do minimo)
 	
 	li $v0, 1			# Imprime o novo valor da sequencia
 	move $a0, $t2
@@ -909,9 +958,10 @@ end_loop_phi:
 	lw $t0, 12($sp)			# Recupera o valor original de $t0
 	lw $t1, 16($sp)			# Recupera o valor original de $t1
 	lw $t2, 20($sp)			# Recupera o valor original de $t2
-	lw $t3, 24($sp)			# Recupera o valor original de $t1
-	lw $t4, 28($sp)			# Recupera o valor original de $t2
-	addi $sp, $sp, 32		# Desaloca o espaco utilizado na pilha
+	lw $t3, 24($sp)			# Recupera o valor original de $t3
+	lw $t4, 28($sp)			# Recupera o valor original de $t4
+	lw $t5, 32($sp)			# Recupera o valor original de $t5
+	addi $sp, $sp, 36		# Desaloca o espaco utilizado na pilha
  
 	jr $ra				# Retorna para o endereco contido em $ra
 	
@@ -923,23 +973,59 @@ lerInt:
 	li $v0, 5		# Lê inteiro
 	syscall
 	
-	addi $s1, $zero, 1	# $s0 indica se a operacao é a multiplicacao,
-	beq $s0, $s1, bit16	# cujas entradas devem ter, no maximo, 16 bytes
+	addi $s6, $zero, 0	# $s6 = 0 : operacao nao possui restricoes relativas aos operandos.
+	beq $s7, $s6, return
 	
-bit32:	addi $a1, $zero, 2147483647
-	j cmp
-bit16:	addi $a1, $zero, 65536
-
-cmp:	blt $a0, $a1, return	
-
-	li $v0, 4
-	la $a0, err
-	syscall
-	j lerInt
+	addi $s6, $zero, 1	# $s6 = 1 : operacao aceita operandos de, no maximo, 15 bytes.
+	beq $s7, $s6, bit15
+	
+	addi $s6, $zero, 2	# $s6 = 2 : operacao nao aceita operandos negativos.
+	beq $s7, $s6, no_neg
+	
+	addi $s6, $zero, 3	# $s6 = 3 : operacao nao aceita operando igual a zero.
+	beq $s7, $s6, no_zero
 	
 return:	jr $ra
 	
-lerFloat:
-	li $v0, 6
+bit15:	
+	addi $t6, $zero, 32767	# Limite superior
+	addi $t7, $zero, -32767	# Limite inferior
+	bgt $v0, $t6, err_msg0	# Caso o valor lido seja maior que o limite superior, exibe mensagem de erro
+	blt $v0, $t7, err_msg0	# Caso o valor lido seja menor que o limite inferior, exibe mensagem de erro
+	j return		# Caso não haja erro, retorna o valor lido em $v0
+	
+no_neg:	
+	bltz $v0, err_msg1	# Caso o valor lido seja menor que zero, exibe mensagem de erro
+	j return
+	
+no_zero:
+	beqz $v0, err_msg2	# Caso o valor lido seja igual a zero, exibe mensagem de erro
+	j return
+	
+err_msg0:
+	li $v0, 4
+	la $a0, err0		# "ERRO: Valor invalido! Os argumentos devem ser estar entre -32767 e 32767."
 	syscall
-	jr $ra
+	j main
+
+err_msg1:
+	li $v0, 4
+	la $a0, err1		# "ERRO: Valor invalido! O(s) argumento(s) não deve(m) ser negativo(s)."
+	syscall
+	j main
+
+err_msg2:
+	li $v0, 4
+	la $a0, err2		# "ERRO: Valor invalido! Este argumento deve ser diferente de zero."
+	syscall
+	j main	
+	
+lerFloat:
+	li $v0, 6		# Lê número de ponto flutuante
+	syscall
+	
+	mtc1 $zero, $f1		# Converte o valor inteiro 0 para ponto flutuante e o armazena em $f1
+	c.le.s $f0, $f1		# Caso o valor lido seja menor que zero,
+	bc1t err_msg1		# exibe mensagem de erro
+	
+	jr $ra			# Caso não haja erro, retorna o valor lido em $f0
