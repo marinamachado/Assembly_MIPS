@@ -627,7 +627,7 @@ case_10:
 	
 	move $a0, $s1		#  Recupera o primeiro argumento, que foi perdido na hora de imprimir a mensagem
 							
-	jal calc_phi		# Calcula e imprime os numeros da sequencia de Fibonacci no range [<$a0>,<$a1>]
+	jal calc_fib		# Calcula e imprime os numeros da sequencia de Fibonacci no range [<$a0>,<$a1>]
 	
 	j main
 	
@@ -913,7 +913,7 @@ end_loop_fat:
 #	PROCEDIMENTO: SEQUENCIA DE FIBONACCI
 #
 	
-calc_phi:
+calc_fib:
 	addi $sp, $sp, -36		# Aloca espaco na pilha
 	sw $a0, 0($sp)			# Guarda o primeiro argumento
 	sw $a1, 4($sp)			# Guarda o segundo argumento
@@ -933,24 +933,24 @@ calc_phi:
 	
 	li $t5, 1			# Guarda em $t5 que o numero atual da sequencia eh o primeiro
 	
-	# Imprime o primeiro valor da sequencia se ele estiver no intervalo. 
-	bgt $t3, $t5, goto_phi_2
+	bgt $t3, $t5, goto_fib_2        #verifica se o primeiro elemento da sequencia esta no intervalo
 	
+	# Imprime o primeiro valor da sequencia se ele estiver no intervalo. 
 	li $v0, 1
 	move $a0, $t0
-	syscall 
+	syscall
 	
 	li $v0, 4			# Imprime um espaco
 	la $a0, space
 	syscall
 
-goto_phi_2:
+goto_fib_2:
 
 	addi $t5, $t5, 1		# Incrementa $t5 para indicar que o numero atual da sequencia eh o segundo
 
+	blt $t5, $t3, loop_fib 		#verifica se FIB(2) esta no intervalo
+ 
 	# Imprime o segundo valor da sequencia se ele estiver no intervalo.
-	bgt $t3, $t1, loop_phi
-
 	li $v0, 1
 	move $a0, $t1
 	syscall
@@ -959,10 +959,10 @@ goto_phi_2:
 	la $a0, space
 	syscall		
 					
-loop_phi:
+loop_fib:
 
 	addi $t5, $t5, 1		# Incrementa $t5 para indicar que o proximo numero da sequencia esta sendo calculado
-	bgt $t5, $t4, end_loop_phi 	# Finaliza o loop se o intervalo jah foi ultrapassado ($t5 > $t4: acima do maximo)
+	bgt $t5, $t4, end_loop_fib 	# Finaliza o loop se o intervalo jah foi ultrapassado ($t5 > $t4: acima do maximo)
 
 	# Calcula o proximo valor da sequencia
 	add $t2, $t0, $t1 		# $t2 = $t0 + $t1 (F(n) = F(n-1) + F(n-2))
@@ -982,9 +982,9 @@ loop_phi:
 	move $t0, $t1 			# Move os valores da sequencia "um registrador para baixo" para poder calcular o proximo
 	move $t1, $t2
 	
-	j loop_phi			# Reinicia loop
+	j loop_fib			# Reinicia loop
 	
-end_loop_phi:
+end_loop_fib:
 
 	lw $a0, 0($sp)			# Recupera o valor original de $a0
 	lw $a1, 4($sp)			# Recupera o valor original de $a1
