@@ -29,7 +29,6 @@ ins2:	.asciiz "> Inserir dois numeros\n"
 err0:	.asciiz "ERRO: Valor invalido! Os argumentos devem ser estar entre -32767 e 32767.\n"
 err1:	.asciiz "ERRO: Valor invalido! O(s) argumento(s) não deve(m) ser negativo(s).\n"
 err2:	.asciiz "ERRO: Valor invalido! Este argumento deve ser diferente de zero.\n"
-err3:	.asciiz "ERRO: Valor invalido! O argumento deve estar entre 0 e 19.\n"
 
 sum0:	.asciiz "\tSOMA\n"
 sum1:	.asciiz " + "
@@ -549,18 +548,19 @@ case_9:
 	la $a0, ins1	# "Inserir um numero"
 	syscall
 	
-	# $s7 = 2 indica que a operacao nao aceita numeros negativos nem maiores que 19
-	addi $s7, $zero, 4
+	# $s7 = 2 indica que a operacao nao aceita numeros negativos
+	addi $s7, $zero, 2
 	
 	jal lerInt	
 	move $a0, $v0	# $a0 = primeiro argumento
 	
 	jal calc_fat	# Efetuar operacao
 	move $s0, $v0	# $s0 = resultado da operacao
-			# $s1 = primeiro argumento
+#	move $s1, $a0	# $s1 = primeiro argumento
 	
 	# "<$a0>! = <$s0>\n"
 	li $v0, 1
+#	move $a0, $s1
 	syscall
 	li $v0, 4	
 	la $a0, fat1
@@ -799,6 +799,7 @@ raiz:						# Retorna o valor $v0 = sqrt($a0)
 	li $s0, 0				# $s0 = 0
 	li $t0, 1				# $t0 = 1, erro de cada iteracao
 	div $t1, $a0, 2				# $t1 = $a0 / 2, chute inicial
+	beq $t1,$s0,resp_raiz			# se $t1 == 0 , vai para resposta
  	li $t5,0				# $t5 =cont= 0
  	li $s1,100				# $s1=100
 loop_raiz:   
@@ -1019,9 +1020,6 @@ lerInt:
 	addi $s6, $zero, 3	# $s6 = 3 : operacao nao aceita operando igual a zero.
 	beq $s7, $s6, no_zero
 	
-	addi $s6, $zero, 4	# $s6 = 4 : operacao nao aceita operando menor que 0 ou maior que 19 (fatorial)
-	beq $s7, $s6, lim_fat
-	
 return:	jr $ra
 	
 bit15:	
@@ -1037,12 +1035,6 @@ no_neg:
 	
 no_zero:
 	beqz $v0, err_msg2	# Caso o valor lido seja igual a zero, exibe mensagem de erro
-	j return
-	
-lim_fat:
-	addi $t6, $zero, 19	# Limite superior
-	bltz $v0, err_msg3
-	bgt $v0, $t6, err_msg3
 	j return
 	
 err_msg0:
@@ -1061,13 +1053,7 @@ err_msg2:
 	li $v0, 4
 	la $a0, err2		# "ERRO: Valor invalido! Este argumento deve ser diferente de zero."
 	syscall
-	j main
-
-err_msg3:
-	li $v0, 4
-	la $a0, err3		# "ERRO: Valor invalido! Este argumento deve estar entre 0 e 19."
-	syscall
-	j main
+	j main	
 	
 lerFloat:
 	li $v0, 6		# Lê número de ponto flutuante
