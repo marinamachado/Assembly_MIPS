@@ -6,16 +6,16 @@
 #						 1o. Trabalho Pratico
 #						    Calculadora
 #
-# Este programa visa simular, em Assembly MIPS, uma calculadora capaz de realizar as seguintes operacoes:
+# 	Este programa visa simular, em Assembly MIPS, uma calculadora capaz de realizar as seguintes operacoes:
 # - soma	- multiplicacao		- potencia		- tabuada		- fatorial
 # - subtracao	- divisao		- raiz quadrada		- calculo do IMC	- sequencia de Fibonacci
 #
 #
 #													ALUNOS:
-#								Joao Pedro Almeida Secundino
-#								Luis Eduardo Rozante de Freitas Pereira
-#								Luiza Pereira Pinto Machado		
-#								Marina Fontes Alcantara Machado
+#							Joao Pedro Almeida Secundino			
+#							Luis Eduardo Rozante de Freitas Pereira		10734794
+#							Luiza Pereira Pinto Machado			 7564426
+#							Marina Fontes Alcantara Machado			10692040
 #
 ################################################################################################################
 
@@ -51,6 +51,7 @@ sqrt1:	.asciiz "sqrt"
 
 tab0:	.asciiz "\tTABUADA\n"
 tab1:	.asciiz "> Tabuada de "
+tabXis: .asciiz " x "
 
 imc0:	.asciiz "Inserir altura (m) e peso (kg)\n"
 imc1:	.asciiz "IMC: "
@@ -376,7 +377,7 @@ skip0:	li $v0, 1
 skip1:	li $v0, 4
 	la $a0, eq
 	syscall
-	li $v0, 1
+	li $v0, 36
 	move $a0, $s0
 	syscall
 	li $v0, 4
@@ -460,23 +461,51 @@ case_7:
 	addi $t0, $zero, 0
 	addi $t1, $zero, 11
 
-loop_vetor: 
-	bge $t0, $t1, end_loop_vetor
+	li $v0, 4
+	la $a0, tab1    	# Imprime "tabuada de "
+	syscall
 
 	li $v0, 1
-	lw $a0, 0($s0)
+	move $a0, $s1 		# Imprime o numero digitado
+	syscall
+
+	li $v0, 4
+	la $a0, tdot		# Imprime ":\n"
+	syscall
+
+loop_imprime_tabuada: #<$s1> x <$t0> = <0($s0)>
+	bge $t0, $t1, end_imprime_tabuada
+	
+	li $v0, 36		# Imprime o numero digitado
+	move $a0, $s1 
+	syscall 
+
+	li $v0, 4
+	la $a0, tabXis		# Imprime o sinal da multiplicação
+	syscall
+
+	li $v0, 36
+	move $a0, $t0 		# Imprime o multiplicador atual
+	syscall
+
+	li $v0, 4
+	la $a0, eq		# Imprime o sinal de igual
+	syscall
+
+	li $v0, 36
+	lw $a0, 0($s0)		# Imprime o resultado
 	syscall
 	
 	li $v0, 4
-	la $a0, space
-	syscall
-
-	addi $t0, $t0, 1
-	addi $s0, $s0, 4
-
-	j loop_vetor
+	la $a0, nl		# Imprime nova linha
+	syscall	
 	
-end_loop_vetor:
+	addi $t0, $t0, 1	# Atualiza iterador
+	addi $s0, $s0, 4 	# Atualiza ponteiro do vetor
+
+	j loop_imprime_tabuada
+	
+end_imprime_tabuada:
 	j main
 
 #
@@ -760,7 +789,7 @@ end_pot:
 #
 #	PROCEDIMENTO: CALCULO DA RAIZ QUADRADA 
 #
-
+						#UTILIZA O METODO DE NEWTON PARA RESOLUCAO
 raiz:						# Retorna o valor $v0 = sqrt($a0)
 	addi $sp, $sp, -8			# Aloca espaco na pilha
 	sw $a0, 0($sp)				# Guarda o primeiro argumento
@@ -769,10 +798,11 @@ raiz:						# Retorna o valor $v0 = sqrt($a0)
 	li $s0, 0				# $s0 = 0
 	li $t0, 1				# $t0 = 1, erro de cada iteracao
 	div $t1, $a0, 2				# $t1 = $a0 / 2, chute inicial
- 
+ 	li $t5,0				# $t5 =cont= 0
+ 	li $s1,100				# $s1=100
 loop_raiz:   
 	beq $t0, $s0, end_loop_raiz		# Finaliza repeticao quando o erro for igual a 0
-	
+	beq $t5,$s1,end_loop_raiz		#Termina se passou pelo loop 100 vezes
 	move $t2, $t1				# $t2 = $t1
 	
 	div $t3, $a0, $t1			# $t3 = $a0 / $t1
@@ -781,12 +811,16 @@ loop_raiz:
 	div $t1, $t3, 2				# $t1 = $t3 / 2
 	
 	sub $t0, $t1, $t2			# $t0 = $t1 - $t2
-	
+	addi $t5,$t5,1
 	j loop_raiz				# Reinicia loop
  
 end_loop_raiz:
-	move $v0, $t1				# $v0 = $t1
+	mul $s2,$t1,$t1
+	ble  $s2,$a0,resp_raiz			#checa se o resultado da funcao é maior que meu numero
+	addi $t1,$t1,-1				# se for arredonda para baixo
 	
+resp_raiz:
+	move $v0, $t1				# $v0 = $t1
 	lw $a0, 0($sp)				# Recupera o valor original de $a0
 	lw $ra, 4($sp)				# Recupera o valor original de $ra
 	addi $sp, $sp, 8			# Desaloca o espaco utilizado na pilha
@@ -799,7 +833,6 @@ end_loop_raiz:
   
 # Este procedimento retona um endereco de vetor de tamanho 10 e nao imprime nenhum valor na tela. 
 # O retorno da funcao eh colocado no vetor passado no argumento 1.
-#eh necessario criar um vetor na main
 tabuada:
 	addi $sp, $sp, -12		# Aloca espaco na pilha
 	sw $a0, 0($sp)			# Guarda o primeiro argumento, numero que indica qual a tabuada a ser retornada
@@ -838,7 +871,7 @@ calc_imc:
 	s.s $f1, 0($sp)		# Guarda o primeiro argumento (altura)
 	s.s $f2, 4($sp)		# Guarda o segundo argumento (peso)
 	sw $ra, 8($sp)		# Guarda o endereço de retorno
- 
+	
 	mul.s $f3, $f1, $f1	# $f3 = $f1 * $f1 = altura * altura
 	div.s $f0, $f2, $f3	# $f0 = $f2 / $f3 = peso / (altura * altura)
  
@@ -1024,8 +1057,8 @@ lerFloat:
 	li $v0, 6		# Lê número de ponto flutuante
 	syscall
 	
-	mtc1 $zero, $f1		# Converte o valor inteiro 0 para ponto flutuante e o armazena em $f1
-	c.le.s $f0, $f1		# Caso o valor lido seja menor que zero,
+	mtc1 $zero, $f11	# Converte o valor inteiro 0 para ponto flutuante e o armazena em $f1
+	c.le.s $f0, $f11	# Caso o valor lido seja menor que zero,
 	bc1t err_msg1		# exibe mensagem de erro
 	
 	jr $ra			# Caso não haja erro, retorna o valor lido em $f0
