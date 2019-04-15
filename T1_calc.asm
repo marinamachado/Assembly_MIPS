@@ -798,7 +798,8 @@ raiz:						# Retorna o valor $v0 = sqrt($a0)
  
 	li $s0, 0				# $s0 = 0
 	li $t0, 1				# $t0 = 1, erro de cada iteracao
-	div $t1, $a0, 2				# $t1 = $a0 / 2, chute inicial
+	div $t1, $a0, 2	                        # $t1 = $a0 / 2, chute inicial
+	beq $t1,$s0,resp_raiz			# se for raiz 0, vai para a resposta como 0
  	li $t5,0				# $t5 =cont= 0
  	li $s1,100				# $s1=100
 loop_raiz:   
