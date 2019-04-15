@@ -12,10 +12,10 @@
 #
 #
 #													ALUNOS:
-#							Joao Pedro Almeida Secundino			
-#							Luis Eduardo Rozante de Freitas Pereira		10734794
-#							Luiza Pereira Pinto Machado			 7564426
-#							Marina Fontes Alcantara Machado			10692040
+#								Joao Pedro Almeida Secundino
+#								Luis Eduardo
+#								Luiza Pereira Pinto Machado		
+#								Marina Fontes Alcantara Machado
 #
 ################################################################################################################
 
@@ -348,7 +348,8 @@ case_5:
 	li $v0, 4
 	la $a0, ins2	# "Inserir dois numeros"
 	syscall
-		
+	
+	li $s7, 2	#operacao nao aceita operandos negativos	
 	jal lerInt
 	move $a0, $v0	# $a0 = primeiro argumento
 	jal lerInt
@@ -443,9 +444,9 @@ case_7:
 	la $a0, ins1
 	syscall			# Imprime a string "digite um numero"
 	
-	li $v0, 5
-	syscall
-	move $s1, $v0  		# Le um inteiro e guarda em $s1
+	li $s7, 2	#operacao nao aceita operandos negativos	
+	jal lerInt
+	move $s1, $v0	# $a0 = primeiro argumento
 
 	li $v0, 9
 	li $a0, 44
@@ -462,46 +463,46 @@ case_7:
 	addi $t1, $zero, 11
 
 	li $v0, 4
-	la $a0, tab1    	# Imprime "tabuada de "
+	la $a0, tab1    	#imprime "tabuada de "
 	syscall
 
 	li $v0, 1
-	move $a0, $s1 		# Imprime o numero digitado
+	move $a0, $s1 		#imprime o numero digitado
 	syscall
 
 	li $v0, 4
-	la $a0, tdot		# Imprime ":\n"
+	la $a0, tdot		#imprime ":\n"
 	syscall
 
 loop_imprime_tabuada: #<$s1> x <$t0> = <0($s0)>
 	bge $t0, $t1, end_imprime_tabuada
 	
-	li $v0, 36		# Imprime o numero digitado
+	li $v0, 36		#imprime o numero digitado
 	move $a0, $s1 
 	syscall 
 
 	li $v0, 4
-	la $a0, tabXis		# Imprime o sinal da multiplicação
+	la $a0, tabXis		#imprime o sinal da multiplicação
 	syscall
 
 	li $v0, 36
-	move $a0, $t0 		# Imprime o multiplicador atual
+	move $a0, $t0 		#imprime o multiplicador atual
 	syscall
 
 	li $v0, 4
-	la $a0, eq		# Imprime o sinal de igual
+	la $a0, eq		#imprime o sinal de igual
 	syscall
 
 	li $v0, 36
-	lw $a0, 0($s0)		# Imprime o resultado
+	lw $a0, 0($s0)		#imprime o resultado
 	syscall
 	
 	li $v0, 4
-	la $a0, nl		# Imprime nova linha
+	la $a0, nl		#imprime nova linha
 	syscall	
 	
-	addi $t0, $t0, 1	# Atualiza iterador
-	addi $s0, $s0, 4 	# Atualiza ponteiro do vetor
+	addi $t0, $t0, 1	#atualiza iterador
+	addi $s0, $s0, 4 	#atualiza ponteiro do vetor
 
 	j loop_imprime_tabuada
 	
@@ -818,7 +819,6 @@ end_loop_raiz:
 	mul $s2,$t1,$t1
 	ble  $s2,$a0,resp_raiz			#checa se o resultado da funcao é maior que meu numero
 	addi $t1,$t1,-1				# se for arredonda para baixo
-	
 resp_raiz:
 	move $v0, $t1				# $v0 = $t1
 	lw $a0, 0($sp)				# Recupera o valor original de $a0
@@ -833,6 +833,7 @@ resp_raiz:
   
 # Este procedimento retona um endereco de vetor de tamanho 10 e nao imprime nenhum valor na tela. 
 # O retorno da funcao eh colocado no vetor passado no argumento 1.
+#eh necessario criar um vetor na main
 tabuada:
 	addi $sp, $sp, -12		# Aloca espaco na pilha
 	sw $a0, 0($sp)			# Guarda o primeiro argumento, numero que indica qual a tabuada a ser retornada
@@ -871,7 +872,7 @@ calc_imc:
 	s.s $f1, 0($sp)		# Guarda o primeiro argumento (altura)
 	s.s $f2, 4($sp)		# Guarda o segundo argumento (peso)
 	sw $ra, 8($sp)		# Guarda o endereço de retorno
-	
+ 
 	mul.s $f3, $f1, $f1	# $f3 = $f1 * $f1 = altura * altura
 	div.s $f0, $f2, $f3	# $f0 = $f2 / $f3 = peso / (altura * altura)
  
@@ -1057,8 +1058,8 @@ lerFloat:
 	li $v0, 6		# Lê número de ponto flutuante
 	syscall
 	
-	mtc1 $zero, $f11	# Converte o valor inteiro 0 para ponto flutuante e o armazena em $f1
-	c.le.s $f0, $f11	# Caso o valor lido seja menor que zero,
+	mtc1 $zero, $f1		# Converte o valor inteiro 0 para ponto flutuante e o armazena em $f1
+	c.le.s $f0, $f1		# Caso o valor lido seja menor que zero,
 	bc1t err_msg1		# exibe mensagem de erro
 	
 	jr $ra			# Caso não haja erro, retorna o valor lido em $f0
